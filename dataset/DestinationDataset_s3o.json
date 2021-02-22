@@ -1,0 +1,17 @@
+{
+	"name": "DestinationDataset_s3o",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabase1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "tweetfeb21"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
