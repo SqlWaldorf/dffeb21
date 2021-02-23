@@ -26,7 +26,7 @@
 					"name": "Aggregate1"
 				}
 			],
-			"script": "source(output(\n\t\tstation_id as short,\n\t\tname as string,\n\t\tlat as double,\n\t\tlong as double,\n\t\tdockcount as short,\n\t\tlandmark as string,\n\t\tinstallation as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> source1\nsource1 aggregate(groupBy(landmark),\n\ttotaldockcount = sum(dockcount)) ~> Aggregate1\nAggregate1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> sink1"
+			"script": "source(output(\n\t\tstation_id as short,\n\t\tname as string,\n\t\tlat as double,\n\t\tlong as double,\n\t\tdockcount as short,\n\t\tlandmark as string,\n\t\tinstallation as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tpartitionBy('hash', 1)) ~> source1\nsource1 aggregate(groupBy(landmark),\n\ttotaldockcount = sum(dockcount)) ~> Aggregate1\nAggregate1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> sink1"
 		}
 	}
 }
