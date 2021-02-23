@@ -1,0 +1,20 @@
+{
+	"name": "PowerQuery1",
+	"properties": {
+		"type": "WranglingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"name": "bikestations",
+					"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~>  bikestations",
+					"dataset": {
+						"referenceName": "bikestations",
+						"type": "DatasetReference"
+					}
+				}
+			],
+			"sinks": [],
+			"script": "section Section1;\r\nshared bikestations = let\r\n  AdfDoc = AzureStorage.BlobContents(\"https://njlabfiles.blob.core.windows.net/babs/data/201508_station_data.csv\"),\r\n  Csv = Csv.Document(AdfDoc, [Delimiter = \",\", Encoding = TextEncoding.Utf8, QuoteStyle = QuoteStyle.Csv]),\r\n  PromotedHeaders = Table.PromoteHeaders(Csv, [PromoteAllScalars = true])\r\nin\r\n  PromotedHeaders;\r\nshared UserQuery = let\r\n  Source = bikestations,\r\n  #\"Removed columns\" = Table.RemoveColumns(Source, {\"lat\", \"long\"}),\r\n  #\"Changed column type\" = Table.TransformColumnTypes(#\"Removed columns\", {{\"installation\", type date}}),\r\n  #\"Inserted year\" = Table.AddColumn(#\"Changed column type\", \"Year\", each Date.Year([installation]), type number),\r\n  #\"Removed columns 1\" = Table.RemoveColumns(#\"Inserted year\", {\"installation\"})\r\nin\r\n  #\"Removed columns 1\";\r\n"
+		}
+	}
+}
