@@ -1,0 +1,617 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "njdemodfjune"
+		},
+		"AzureBlobStorage1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorage1'"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://mydemodlg2.dfs.core.windows.net"
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://njdemokeys.vault.azure.net/"
+		},
+		"Trigger_3dt_properties_pipeline_parameters_windowStart": {
+			"type": "string",
+			"defaultValue": "@trigger().outputs.windowStartTime"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/demo')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "just a demo",
+				"activities": [
+					{
+						"name": "Copy_3dt",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "tweets/2019/12/05/10/"
+							},
+							{
+								"name": "Destination",
+								"value": "datalake/RAW/@{formatDateTime(pipeline().parameters.windowStart,'yyyy')}/tweets/"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings",
+									"skipLineCount": 0
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings",
+									"maxRowsPerFile": 25000,
+									"fileNamePrefix": ""
+								}
+							},
+							"enableStaging": false,
+							"enableSkipIncompatibleRow": true,
+							"validateDataConsistency": false
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_3dt",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_3dt",
+								"type": "DatasetReference",
+								"parameters": {
+									"cw_folderPath": "RAW/@{formatDateTime(pipeline().parameters.windowStart,'yyyy')}/tweets"
+								}
+							}
+						]
+					}
+				],
+				"parameters": {
+					"windowStart": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SourceDataset_3dt')]",
+				"[concat(variables('factoryId'), '/datasets/DestinationDataset_3dt')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DestinationDataset_3dt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureDataLakeStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"cw_folderPath": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().cw_folderPath",
+							"type": "Expression"
+						},
+						"fileSystem": "datalake"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceDataset_3dt')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "2019/12/05/10",
+						"container": "tweets"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "user_id",
+						"type": "String"
+					},
+					{
+						"name": "status_id",
+						"type": "String"
+					},
+					{
+						"name": "created_at",
+						"type": "String"
+					},
+					{
+						"name": "screen_name",
+						"type": "String"
+					},
+					{
+						"name": "text",
+						"type": "String"
+					},
+					{
+						"name": "source",
+						"type": "String"
+					},
+					{
+						"name": "display_text_width",
+						"type": "String"
+					},
+					{
+						"name": "reply_to_status_id",
+						"type": "String"
+					},
+					{
+						"name": "reply_to_user_id",
+						"type": "String"
+					},
+					{
+						"name": "reply_to_screen_name",
+						"type": "String"
+					},
+					{
+						"name": "is_quote",
+						"type": "String"
+					},
+					{
+						"name": "is_retweet",
+						"type": "String"
+					},
+					{
+						"name": "favorite_count",
+						"type": "String"
+					},
+					{
+						"name": "retweet_count",
+						"type": "String"
+					},
+					{
+						"name": "hashtags",
+						"type": "String"
+					},
+					{
+						"name": "symbols",
+						"type": "String"
+					},
+					{
+						"name": "urls_url",
+						"type": "String"
+					},
+					{
+						"name": "urls_t.co",
+						"type": "String"
+					},
+					{
+						"name": "urls_expanded_url",
+						"type": "String"
+					},
+					{
+						"name": "media_url",
+						"type": "String"
+					},
+					{
+						"name": "media_t.co",
+						"type": "String"
+					},
+					{
+						"name": "media_expanded_url",
+						"type": "String"
+					},
+					{
+						"name": "media_type",
+						"type": "String"
+					},
+					{
+						"name": "ext_media_url",
+						"type": "String"
+					},
+					{
+						"name": "ext_media_t.co",
+						"type": "String"
+					},
+					{
+						"name": "ext_media_expanded_url",
+						"type": "String"
+					},
+					{
+						"name": "ext_media_type",
+						"type": "String"
+					},
+					{
+						"name": "mentions_user_id",
+						"type": "String"
+					},
+					{
+						"name": "mentions_screen_name",
+						"type": "String"
+					},
+					{
+						"name": "lang",
+						"type": "String"
+					},
+					{
+						"name": "quoted_status_id",
+						"type": "String"
+					},
+					{
+						"name": "quoted_text",
+						"type": "String"
+					},
+					{
+						"name": "quoted_created_at",
+						"type": "String"
+					},
+					{
+						"name": "quoted_source",
+						"type": "String"
+					},
+					{
+						"name": "quoted_favorite_count",
+						"type": "String"
+					},
+					{
+						"name": "quoted_retweet_count",
+						"type": "String"
+					},
+					{
+						"name": "quoted_user_id",
+						"type": "String"
+					},
+					{
+						"name": "quoted_screen_name",
+						"type": "String"
+					},
+					{
+						"name": "quoted_name",
+						"type": "String"
+					},
+					{
+						"name": "quoted_followers_count",
+						"type": "String"
+					},
+					{
+						"name": "quoted_friends_count",
+						"type": "String"
+					},
+					{
+						"name": "quoted_statuses_count",
+						"type": "String"
+					},
+					{
+						"name": "quoted_location",
+						"type": "String"
+					},
+					{
+						"name": "quoted_description",
+						"type": "String"
+					},
+					{
+						"name": "quoted_verified",
+						"type": "String"
+					},
+					{
+						"name": "retweet_status_id",
+						"type": "String"
+					},
+					{
+						"name": "retweet_text",
+						"type": "String"
+					},
+					{
+						"name": "retweet_created_at",
+						"type": "String"
+					},
+					{
+						"name": "retweet_source",
+						"type": "String"
+					},
+					{
+						"name": "retweet_favorite_count",
+						"type": "String"
+					},
+					{
+						"name": "retweet_retweet_count",
+						"type": "String"
+					},
+					{
+						"name": "retweet_user_id",
+						"type": "String"
+					},
+					{
+						"name": "retweet_screen_name",
+						"type": "String"
+					},
+					{
+						"name": "retweet_name",
+						"type": "String"
+					},
+					{
+						"name": "retweet_followers_count",
+						"type": "String"
+					},
+					{
+						"name": "retweet_friends_count",
+						"type": "String"
+					},
+					{
+						"name": "retweet_statuses_count",
+						"type": "String"
+					},
+					{
+						"name": "retweet_location",
+						"type": "String"
+					},
+					{
+						"name": "retweet_description",
+						"type": "String"
+					},
+					{
+						"name": "retweet_verified",
+						"type": "String"
+					},
+					{
+						"name": "place_url",
+						"type": "String"
+					},
+					{
+						"name": "place_name",
+						"type": "String"
+					},
+					{
+						"name": "place_full_name",
+						"type": "String"
+					},
+					{
+						"name": "place_type",
+						"type": "String"
+					},
+					{
+						"name": "country",
+						"type": "String"
+					},
+					{
+						"name": "country_code",
+						"type": "String"
+					},
+					{
+						"name": "geo_coords",
+						"type": "String"
+					},
+					{
+						"name": "coords_coords",
+						"type": "String"
+					},
+					{
+						"name": "bbox_coords",
+						"type": "String"
+					},
+					{
+						"name": "status_url",
+						"type": "String"
+					},
+					{
+						"name": "name",
+						"type": "String"
+					},
+					{
+						"name": "location",
+						"type": "String"
+					},
+					{
+						"name": "description",
+						"type": "String"
+					},
+					{
+						"name": "url",
+						"type": "String"
+					},
+					{
+						"name": "protected",
+						"type": "String"
+					},
+					{
+						"name": "followers_count",
+						"type": "String"
+					},
+					{
+						"name": "friends_count",
+						"type": "String"
+					},
+					{
+						"name": "listed_count",
+						"type": "String"
+					},
+					{
+						"name": "statuses_count",
+						"type": "String"
+					},
+					{
+						"name": "favourites_count",
+						"type": "String"
+					},
+					{
+						"name": "account_created_at",
+						"type": "String"
+					},
+					{
+						"name": "verified",
+						"type": "String"
+					},
+					{
+						"name": "profile_url",
+						"type": "String"
+					},
+					{
+						"name": "profile_expanded_url",
+						"type": "String"
+					},
+					{
+						"name": "account_lang",
+						"type": "String"
+					},
+					{
+						"name": "profile_banner_url",
+						"type": "String"
+					},
+					{
+						"name": "profile_background_url",
+						"type": "String"
+					},
+					{
+						"name": "profile_image_url",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureBlobStorage1_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureKeyVault1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('AzureKeyVault1_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_3dt')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipeline": {
+					"pipelineReference": {
+						"referenceName": "demo",
+						"type": "PipelineReference"
+					},
+					"parameters": {
+						"windowStart": {
+							"type": "Expression",
+							"value": "[parameters('Trigger_3dt_properties_pipeline_parameters_windowStart')]"
+						}
+					}
+				},
+				"type": "TumblingWindowTrigger",
+				"typeProperties": {
+					"frequency": "Hour",
+					"interval": 2,
+					"startTime": "2021-06-14T14:32:00Z",
+					"delay": "00:00:00",
+					"maxConcurrency": 50,
+					"retryPolicy": {
+						"intervalInSeconds": 30
+					},
+					"dependsOn": []
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/demo')]"
+			]
+		}
+	]
+}
