@@ -1,0 +1,9 @@
+{
+	"name": "njdemodfjune",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "aac3f67a-b8be-4dc4-8d0d-bc3fc2cfd4d6",
+		"tenantId": "bde242ba-8b31-49b1-8e7a-9a5399b85bce"
+	}
+}
