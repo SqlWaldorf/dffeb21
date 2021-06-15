@@ -4,76 +4,39 @@
 		"description": "just a demo",
 		"activities": [
 			{
-				"name": "Copy_3dt",
-				"type": "Copy",
+				"name": "Data flow1",
+				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
-					"timeout": "7.00:00:00",
+					"timeout": "1.00:00:00",
 					"retry": 0,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": [
-					{
-						"name": "Source",
-						"value": "tweets/2019/12/05/10/"
-					},
-					{
-						"name": "Destination",
-						"value": "datalake/RAW/@{formatDateTime(pipeline().parameters.windowStart,'yyyy')}/tweets/"
-					}
-				],
+				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "DelimitedTextSource",
-						"storeSettings": {
-							"type": "AzureBlobStorageReadSettings",
-							"recursive": true,
-							"wildcardFileName": "*",
-							"enablePartitionDiscovery": false
-						},
-						"formatSettings": {
-							"type": "DelimitedTextReadSettings",
-							"skipLineCount": 0
-						}
+					"dataflow": {
+						"referenceName": "dataflow1",
+						"type": "DataFlowReference"
 					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings",
-							"copyBehavior": "MergeFiles"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings",
-							"maxRowsPerFile": 25000,
-							"fileNamePrefix": ""
-						}
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
 					},
-					"enableStaging": false,
-					"enableSkipIncompatibleRow": true,
-					"validateDataConsistency": false
-				},
-				"inputs": [
-					{
-						"referenceName": "SourceDataset_3dt",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "DestinationDataset_3dt",
-						"type": "DatasetReference",
-						"parameters": {
-							"cw_folderPath": "RAW/@{formatDateTime(pipeline().parameters.windowStart,'yyyy')}/tweets"
-						}
-					}
-				]
+					"traceLevel": "Fine"
+				}
 			}
 		],
 		"parameters": {
 			"windowStart": {
 				"type": "String"
+			}
+		},
+		"variables": {
+			"duration": {
+				"type": "String",
+				"defaultValue": "3"
 			}
 		},
 		"annotations": []
