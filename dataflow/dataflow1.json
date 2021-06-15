@@ -29,7 +29,7 @@
 					"name": "Aggregate1"
 				}
 			],
-			"script": "source(output(\n\t\tstation_id as short,\n\t\tname as string,\n\t\tlat as double,\n\t\tlong as double,\n\t\tdockcount as short,\n\t\tlandmark as string,\n\t\tinstallation as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> source1\nsource1 split(dockcount <= 12,\n\tdisjoint: false) ~> ConditionalSplit1@(small, large)\nConditionalSplit1@large aggregate(groupBy(landmark),\n\ttotal_Largedocks = count(dockcount),\n\t\tSum_dockcount = sum(dockcount)) ~> Aggregate1\nAggregate1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> sink1"
+			"script": "source(output(\n\t\tstation_id as short,\n\t\tname as string,\n\t\tlat as double,\n\t\tlong as double,\n\t\tdockcount as short,\n\t\tlandmark as string,\n\t\tinstallation as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~> source1\nsource1 split(dockcount <= 12,\n\tdisjoint: false) ~> ConditionalSplit1@(small, large)\nConditionalSplit1@large aggregate(groupBy(landmark),\n\ttotal_Largedocks = count(dockcount),\n\t\tSum_dockcount = sum(dockcount),\n\tpartitionBy('hash', 1)) ~> Aggregate1\nAggregate1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> sink1"
 		}
 	}
 }
