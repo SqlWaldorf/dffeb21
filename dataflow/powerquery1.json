@@ -1,0 +1,20 @@
+{
+	"name": "powerquery1",
+	"properties": {
+		"type": "WranglingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"name": "DelimitedText1",
+					"script": "source(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false) ~>  DelimitedText1",
+					"dataset": {
+						"referenceName": "DelimitedText1",
+						"type": "DatasetReference"
+					}
+				}
+			],
+			"sinks": [],
+			"script": "section Section1;\r\nshared DelimitedText1 = let\r\n  AdfDoc = AzureStorage.BlobContents(\"https://njlabfiles.blob.core.windows.net/babs/data/201508_station_data.csv\"),\r\n  Csv = Csv.Document(AdfDoc, [Delimiter = \",\", Encoding = TextEncoding.Utf8, QuoteStyle = QuoteStyle.Csv]),\r\n  PromotedHeaders = Table.PromoteHeaders(Csv, [PromoteAllScalars = true])\r\nin\r\n  PromotedHeaders;\r\nshared UserQuery = let\r\n  Source = DelimitedText1,\r\n  #\"Changed column type\" = Table.TransformColumnTypes(Source, {{\"dockcount\", Int64.Type}}),\r\n  #\"Filtered rows\" = Table.SelectRows(#\"Changed column type\", each [dockcount] > 12),\r\n  #\"Grouped rows\" = Table.Group(#\"Filtered rows\", {\"landmark\"}, {{\"Count\", each Table.RowCount(_), Int64.Type}, {\"total_dockcount\", each List.Sum([dockcount]), type nullable number}})\r\nin\r\n  #\"Grouped rows\";\r\n"
+		}
+	}
+}
